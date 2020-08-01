@@ -1,8 +1,10 @@
 package com.example.demo0401_camera
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Matrix
+import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.view.Surface
@@ -12,6 +14,8 @@ import androidx.camera.core.*
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import kotlinx.android.synthetic.main.activity_main.*
+import java.io.File
+import java.util.concurrent.Executors
 
 //这是设置请求权限的code码
 private const val REQUEST_CODE_PERMISSIONS = 1
@@ -22,6 +26,7 @@ private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
 class MainActivity : AppCompatActivity() {
 
     private var imageCapture: ImageCapture? = null
+    private val executor = Executors.newSingleThreadExecutor()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -31,6 +36,39 @@ class MainActivity : AppCompatActivity() {
         view_finder.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             updateTransform()
         }
+
+        btn_take.setOnClickListener {
+            //创建文件
+            val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.jpg")
+            imageCapture?.takePicture(file, executor,
+                object : ImageCapture.OnImageSavedListener {
+                    override fun onError(
+                        imageCaptureError: ImageCapture.ImageCaptureError,
+                        message: String,
+                        exc: Throwable?
+                    ) {
+                        //保存失败
+                        val msg = "保存失败: $message"
+                        view_finder.post {
+                            Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+
+                    override fun onImageSaved(file: File) {
+                        //保存成功
+                        val msg = "保存成功: ${file.absolutePath}"
+                        view_finder.post {
+                            Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                            //这个广播的目的就是更新图库，发了这个广播进入相册就可以找到你保存的图片了！
+                            val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
+                            val uri = Uri.fromFile(file)
+                            intent.data = uri
+                            sendBroadcast(intent)
+                        }
+                    }
+                })
+        }
+
 
         // 判断是否有拍照的权限
         if (allPermissionsGranted()) {
