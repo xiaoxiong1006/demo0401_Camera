@@ -92,15 +92,20 @@ class MainActivity : AppCompatActivity() {
 
                     override fun onImageSaved(file: File) {
                         //保存成功
-                        val msg = "保存成功: ${file.absolutePath}"
+                       // val msg = "保存成功: ${file.absolutePath}"
                         view_finder.post {
-                            Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
+                            //Toast.makeText(baseContext, msg, Toast.LENGTH_SHORT).show()
                             //这个广播的目的就是更新图库，发了这个广播进入相册就可以找到你保存的图片了！
                             val intent = Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE)
                             val uri = Uri.fromFile(file)
                             intent.data = uri
                             sendBroadcast(intent)
                         }
+
+                        // 跳转到照片预览窗体
+                        val intent = Intent(this@MainActivity, PreviewActivity::class.java)
+                        intent.putExtra("path", file.absolutePath)
+                        startActivity(intent)
                     }
                 })
         }
