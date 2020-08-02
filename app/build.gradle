@@ -42,4 +42,7 @@ dependencies {
     implementation "androidx.camera:camera-core:${camerax_version}"
     implementation "androidx.camera:camera-camera2:${camerax_version}"
 
+    // Doodle
+    implementation 'com.github.1993hzw:Doodle:5.5.3'
+
 }
