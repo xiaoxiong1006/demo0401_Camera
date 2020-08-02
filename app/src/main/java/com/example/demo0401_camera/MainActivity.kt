@@ -19,9 +19,8 @@ import java.util.concurrent.Executors
 
 //这是设置请求权限的code码
 private const val REQUEST_CODE_PERMISSIONS = 1
-//这是要获取的拍照权限
-private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-
+//这是要获取的权限
+private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
 class MainActivity : AppCompatActivity() {
 
