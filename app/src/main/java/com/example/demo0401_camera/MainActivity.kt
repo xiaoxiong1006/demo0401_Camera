@@ -27,16 +27,52 @@ class MainActivity : AppCompatActivity() {
 
     private var imageCapture: ImageCapture? = null
     private val executor = Executors.newSingleThreadExecutor()
+    private var lensFacing = CameraX.LensFacing.BACK //默认使用后摄像
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        initEvent()
+
+        // 判断是否有拍照的权限
+        if (allPermissionsGranted()) {
+            //Toast.makeText(this, "已获取拍照权限！", Toast.LENGTH_SHORT).show()
+            view_finder.post{ startCamera()}
+        } else {
+            //请求拍照权限
+            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
+        }
+
+    }
+
+    /**
+     * 处理权限请求的结果 对话框中有被批准了？如果是，启动摄像机。否则请提示
+     */
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        if (requestCode == REQUEST_CODE_PERMISSIONS) {
+            if (allPermissionsGranted()) {
+                //Toast.makeText(this, "已获取拍照权限！", Toast.LENGTH_SHORT).show()
+                view_finder.post{ startCamera()}
+            } else {
+                Toast.makeText(this, "没有拍照权限！！", Toast.LENGTH_SHORT).show()
+                finish()
+            }
+        }
+    }
+
+    private fun initEvent(){
         //取景器监听到布局变化时，重新计算布局
         view_finder.addOnLayoutChangeListener { _, _, _, _, _, _, _, _, _ ->
             updateTransform()
         }
 
+        //拍照
         btn_take.setOnClickListener {
             //创建文件
             val file = File(externalMediaDirs.first(), "${System.currentTimeMillis()}.jpg")
@@ -69,35 +105,16 @@ class MainActivity : AppCompatActivity() {
                 })
         }
 
-
-        // 判断是否有拍照的权限
-        if (allPermissionsGranted()) {
-            //Toast.makeText(this, "已获取拍照权限！", Toast.LENGTH_SHORT).show()
-            view_finder.post{ startCamera()}
-        } else {
-            //请求拍照权限
-            ActivityCompat.requestPermissions(this, REQUIRED_PERMISSIONS, REQUEST_CODE_PERMISSIONS)
-        }
-
-    }
-
-    /**
-     * 处理权限请求的结果 对话框中有被批准了？如果是，启动摄像机。否则请提示
-     */
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<String>,
-        grantResults: IntArray
-    ) {
-        if (requestCode == REQUEST_CODE_PERMISSIONS) {
-            if (allPermissionsGranted()) {
-                //Toast.makeText(this, "已获取拍照权限！", Toast.LENGTH_SHORT).show()
-                view_finder.post{ startCamera()}
+        //切换摄像头
+        btn_switch.setOnClickListener {
+            lensFacing = if (CameraX.LensFacing.FRONT == lensFacing) {
+                CameraX.LensFacing.BACK
             } else {
-                Toast.makeText(this, "没有拍照权限！！", Toast.LENGTH_SHORT).show()
-                finish()
+                CameraX.LensFacing.FRONT
             }
+            startCamera()
         }
+
     }
 
     /**
@@ -118,7 +135,8 @@ class MainActivity : AppCompatActivity() {
             //根据此配置设置目标的比例
             setTargetAspectRatio(AspectRatio.RATIO_16_9)
             //设置取景器前后摄像头
-            setLensFacing(CameraX.LensFacing.BACK)
+            //setLensFacing(CameraX.LensFacing.BACK)
+            setLensFacing(lensFacing)
         }.build()
         // 创建预览
         val preview = Preview(previewConfig!!)
@@ -137,8 +155,9 @@ class MainActivity : AppCompatActivity() {
                 //设置图像捕获模式
                 setCaptureMode(ImageCapture.CaptureMode.MIN_LATENCY)
                 setTargetAspectRatio(AspectRatio.RATIO_16_9)
-                //设置前后摄像头
-                setLensFacing(CameraX.LensFacing.BACK)
+                //设置取景器前后摄像头
+                //setLensFacing(CameraX.LensFacing.BACK)
+                setLensFacing(lensFacing)
             }.build()
         // 构建图像捕获用例
         imageCapture = ImageCapture(imageCaptureConfig!!)
